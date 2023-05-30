@@ -1,0 +1,66 @@
+{
+  "name": "fe-dev-tools",
+  "displayName": "fe-dev-tools",
+  "publisher": "2333Ge",
+  "description": "fe-dev-tools",
+  "version": "0.0.1",
+  "repository": "https://github.com/2333Ge/fe-dev-tools",
+  "icon": "source/logo.png",
+  "engines": {
+    "vscode": "^1.61.0"
+  },
+  "categories": [
+    "Formatters"
+  ],
+  "activationEvents": [],
+  "keywords": [
+    "rnstyle",
+    "react native style",
+    "rn",
+    "css to rnstyle",
+    "css style"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "fe-dev-tools.getTSFromJSON",
+        "title": "ai json 转 typescript"
+      }
+    ],
+    "keybindings": [
+      {
+        "key": "ctrl+0",
+        "mac": "ctrl+0",
+        "command": "fe-dev-tools.getTSFromJSON",
+        "when": "editorTextFocus"
+      }
+    ],
+    "configuration": []
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "build": "./bin/build.sh"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "14.x",
+    "@types/vscode": "^1.61.0",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "eslint": "^7.27.0",
+    "glob": "^7.1.7",
+    "mocha": "^8.4.0",
+    "typescript": "^4.3.2",
+    "vscode-test": "^1.5.2"
+  },
+  "dependencies": {
+    "openai": "^3.2.1"
+  }
+}
