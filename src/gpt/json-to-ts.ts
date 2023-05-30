@@ -25,11 +25,7 @@ export const getCompletion = async (input: string) => {
     });
     return response.data.choices[0].message?.content;
   } catch (error: any) {
-    if (error.response) {
-      console.log(error.response.status);
-      console.log(error.response.data);
-    } else {
-      console.log(error.message);
-    }
+    console.log("error====>", error.response?.data);
+    return error.response?.data?.error?.message || "未知错误";
   }
 };
