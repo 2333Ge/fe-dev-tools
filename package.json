@@ -12,7 +12,9 @@
   "categories": [
     "Formatters"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "keywords": [
     "rnstyle",
     "react native style",
@@ -26,6 +28,14 @@
       {
         "command": "fe-dev-tools.getTSFromJSON",
         "title": "ai json 转 typescript"
+      },
+      {
+        "command": "fe-dev-tools.getJSONFromTS",
+        "title": "ai typescript 转 JSON"
+      },
+      {
+        "command": "fe-dev-tools.showTools",
+        "title": "打开fe-dev-tools工具面板"
       }
     ],
     "keybindings": [
@@ -36,7 +46,14 @@
         "when": "editorTextFocus"
       }
     ],
-    "configuration": []
+    "views": {
+      "explorer": [
+        {
+          "id": "nodeDependencies",
+          "name": "Node Dependencies"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
