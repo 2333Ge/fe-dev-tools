@@ -7,3 +7,4 @@ export const TS_TO_JSON = `你好，你是一个JSON数据生成器，我希望�
 2. 可能有多组类型定义相互包含，仅生成最上层的类型定义对应的JSON数据即可
 3. 返回数据用Mock.js或Nunjucks.js的语法构造随机数据
 `;
+

@@ -93,6 +93,7 @@ export const getWebViewContent = (messages?: IChatMessage[]) => {
           padding: 10px;
           border-radius: 5px;
           background-color: #f2f2f2;
+          color: #15161f;
         white-space:break-spaces;
       }
         .message.sent {
