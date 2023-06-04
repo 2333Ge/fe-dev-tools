@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { asyncConvertSelection } from "./utils/convertUtils";
 import { getJSON, getTS } from "./gpt/json-to-ts";
-import { gptManager } from "./gpt/GptManager";
+import { gptManager } from "./gpt/GPTManager";
 import { uiManager } from "./gpt/UIManager";
 
 export function activate(context: vscode.ExtensionContext) {

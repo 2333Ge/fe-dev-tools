@@ -1,7 +1,13 @@
 import * as vscode from "vscode";
+import { IWebViewMessage, IChatMessage } from "./data";
+import { getWebViewContent } from "./webviewContent";
+import { gptManager } from "./GPTManager";
+import { JSON_TO_TS } from "./prompts";
 
 class UIManager {
   private _statusBar!: vscode.StatusBarItem;
+  private _currentPanel?: vscode.WebviewPanel;
+  private _messages: IChatMessage[] = [];
 
   constructor() {
     this._statusBar = vscode.window.createStatusBarItem(
@@ -13,31 +19,62 @@ class UIManager {
     this._statusBar.show();
   }
 
-  show() {
-    const panel = vscode.window.createWebviewPanel(
-      "catCoding",
-      "Cat Coding",
-      vscode.ViewColumn.One,
-      {}
-    );
+  onDidReceiveWebviewMessage = (message: IWebViewMessage) => {
+    const { command, data } = message;
+    console.log('message====>',message);
+    switch (command) {
+      case "chat":
+        this._messages = [
+          { role: "user", content: data.content, status: "success" },
+          { role: "assistant", content: "", status: "pending" },
+        ];
+        this._currentPanel!.webview.html = getWebViewContent(this._messages);
+        gptManager
+          .getSingleCompletion(JSON_TO_TS, data.content)
+          .then((res) => {
+            this._messages[1].content = res;
+            this._messages[1].status = "success";
+            this._currentPanel!.webview.html = getWebViewContent(
+              this._messages
+            );
+          })
+          .catch((err: Error) => {
+            this._messages[1].content = err.message;
+            this._messages[1].status = "error";
+            this._currentPanel!.webview.html = getWebViewContent(
+              this._messages
+            );
+          });
+        break;
+    }
+  };
 
-    // And set its HTML content
-    panel.webview.html = this.getWebviewContent();
-  }
-
-  getWebviewContent() {
-    return `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Cat Coding</title>
-  </head>
-  <body>
-      <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="300" />
-  </body>
-  </html>`;
-  }
+  show = () => {
+    const columnToShowIn = vscode.window.activeTextEditor
+      ? vscode.window.activeTextEditor.viewColumn
+      : undefined;
+    if (this._currentPanel) {
+      // If we already have a panel, show it in the target column
+      this._currentPanel.reveal(columnToShowIn);
+    } else {
+      this._currentPanel = vscode.window.createWebviewPanel(
+        "catCoding",
+        "前端开发小工具",
+        vscode.ViewColumn.Beside,
+        {
+          enableScripts: true,
+        }
+      );
+      this._currentPanel.webview.html = getWebViewContent();
+      this._currentPanel.webview.onDidReceiveMessage(
+        this.onDidReceiveWebviewMessage,
+        undefined
+      );
+      this._currentPanel.onDidDispose(() => {
+        this._currentPanel = undefined;
+      });
+    }
+  };
 }
 
 export const uiManager = new UIManager();

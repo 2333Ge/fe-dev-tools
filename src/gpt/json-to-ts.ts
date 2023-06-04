@@ -1,5 +1,5 @@
 import { JSON_TO_TS, TS_TO_JSON } from "./prompts";
-import { gptManager } from "./GptManager";
+import { gptManager } from "./GPTManager";
 
 export const getTS = async (input: string) => {
   return gptManager.getSingleCompletion(JSON_TO_TS, input);

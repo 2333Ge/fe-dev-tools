@@ -29,12 +29,16 @@ class GPTManager {
       });
       return response.data.choices[0].message?.content || "无结果";
     } catch (error: any) {
-      console.log("error.response.data====>", error.response.data);
-      return (
-        error.response?.data?.error?.message ||
-        error.response?.data?.error?.code ||
-        "未知错误"
-      );
+      console.log("error====>", error);
+      if (typeof error.response?.data === "string") {
+        throw new Error(error.response.data);
+      } else {
+        throw new Error(
+          error.response?.data?.error?.message ||
+            error.response?.data?.error?.code ||
+            "未知错误"
+        );
+      }
     }
   }
 }
