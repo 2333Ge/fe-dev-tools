@@ -7,7 +7,7 @@ export const getMessageViewContent = (messages?: IChatMessage[]) => {
   return messages
     .map((message) => {
       if (message.status === "pending") {
-        return '<img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="30" />';
+        return '<img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="50" alt="loading" />';
       }
       return `<div class="message ${message.role === "user" ? "sent" : ""}">${
         message.content
@@ -15,6 +15,9 @@ export const getMessageViewContent = (messages?: IChatMessage[]) => {
     })
     .join("");
 };
+
+const INPUT_MAX_HEIGHT = 150;
+const INPUT_MIN_HEIGHT = 30;
 
 export const getWebViewContent = (messages?: IChatMessage[]) => {
   return `<!DOCTYPE html>
@@ -43,15 +46,14 @@ export const getWebViewContent = (messages?: IChatMessage[]) => {
           bottom: 0;
           left: 0;
           right: 0;
-          height: 50px;
           background-color: #f2f2f2;
           display: flex;
           align-items: center;
-          padding: 0 10px;
+          padding: 8px 10px;
         }
         #input-box {
           flex-grow: 1;
-          height: 30px;
+          height: ${INPUT_MIN_HEIGHT}px;
           border: none;
           border-radius: 5px;
           padding: 5px;
@@ -105,27 +107,37 @@ export const getWebViewContent = (messages?: IChatMessage[]) => {
         ${getMessageViewContent(messages)}
       </div>
       <div id="input-container">
-        <input type="text" id="input-box" placeholder="Type a message..." />
+        <textarea type="text" id="input-box" placeholder="Type a message..." ></textarea>
         <button id="send-button">Send</button>
-        <!-- <button id="function-button">Function</button> -->
       </div>
       <div id="function-panel">
         <!-- Functionality options -->
       </div>
       <script>
       const vscode = acquireVsCodeApi();
+      const inputNode = document.getElementById("input-box");
+
         document
           .getElementById("send-button")
           .addEventListener("click", function () {
-            const inputBox = document.getElementById("input-box");
-            const content = inputBox.value;
-            inputBox.value = "";
+            const content = inputNode.value;
+            inputNode.value = "";
             vscode.postMessage({
               command: "chat",
               data:{
                 content,
               }
             });
+          });
+          // 自适应高度
+          inputNode.addEventListener("input", (e) => {
+            inputNode.style.height = "30px";
+            if (e.target.scrollHeight <= ${INPUT_MAX_HEIGHT} && e.target.scrollHeight >= ${INPUT_MIN_HEIGHT}) {
+              inputNode.style.height = e.target.scrollHeight + "px";
+            }
+            if(e.target.scrollHeight > ${INPUT_MAX_HEIGHT}){
+              inputNode.style.height = ${INPUT_MAX_HEIGHT} + "px";
+            }
           });
       </script>
     </body>

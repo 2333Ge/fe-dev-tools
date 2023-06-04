@@ -36,6 +36,7 @@ class GPTManager {
         throw new Error(
           error.response?.data?.error?.message ||
             error.response?.data?.error?.code ||
+            error.message ||
             "未知错误"
         );
       }

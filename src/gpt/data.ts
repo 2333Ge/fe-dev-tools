@@ -11,3 +11,9 @@ export type IChatMessage = {
   name?: string;
   status: "pending" | "success" | "error";
 };
+
+export type IConfig = {
+  prompt: string;
+  placeholder: string;
+};
+

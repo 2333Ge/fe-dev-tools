@@ -30,7 +30,7 @@ class UIManager {
         ];
         this._currentPanel!.webview.html = getWebViewContent(this._messages);
         gptManager
-          .getSingleCompletion(JSON_TO_TS, data.content)
+          .getSingleCompletion('', data.content)
           .then((res) => {
             this._messages[1].content = res;
             this._messages[1].status = "success";

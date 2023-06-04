@@ -81,6 +81,7 @@
   </head>
   <body>
     <div id="chat-container">
+      <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="30" alt="loading" />
       <!-- Example chat messages -->
       <div class="message">Hello!</div>
       <div class="message sent">Hi there!</div>
@@ -107,15 +108,14 @@
           document.getElementById("chat-container").appendChild(messageDiv);
         });
       inputNode.addEventListener("input", (e) => {
-        if (e.target.scrollHeight < 150 && e.target.scrollHeight > 30) {
+        inputNode.style.height = "30px";
+        if (e.target.scrollHeight <= 150 && e.target.scrollHeight >= 30) {
           inputNode.style.height = e.target.scrollHeight + "px";
+        }
+        if(e.target.scrollHeight > 150){
+          inputNode.style.height = 150 + "px";
         }
       });
     </script>
   </body>
 </html>
-
-<div class="GrowingTextArea_growWrap___1PZM ChatMessageInputContainer_textArea__kxuJi" data-replicated-value="
-inputNodeinputNode
-inputNodeinputNode
-inputNode"><textarea class="GrowingTextArea_textArea__eadlu" rows="1" placeholder="Talk to Sage on Poe"></textarea></div>
