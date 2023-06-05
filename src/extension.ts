@@ -7,24 +7,6 @@ import { uiManager } from "./gpt/UIManager";
 export function activate(context: vscode.ExtensionContext) {
   gptManager.init();
 
-  let getTSFromJSONCommand = vscode.commands.registerCommand(
-    "fe-dev-tools.getTSFromJSON",
-    () => {
-      asyncConvertSelection((str) => {
-        return getTS(str);
-      });
-    }
-  );
-
-  let getJSONFromTSCommand = vscode.commands.registerCommand(
-    "fe-dev-tools.getJSONFromTS",
-    () => {
-      asyncConvertSelection((str) => {
-        return getJSON(str);
-      });
-    }
-  );
-
   let showTools = vscode.commands.registerCommand(
     "fe-dev-tools.showTools",
     () => {
@@ -32,11 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(
-    getTSFromJSONCommand,
-    getJSONFromTSCommand,
-    showTools
-  );
+  context.subscriptions.push(showTools);
 }
 
 export function deactivate() {}
