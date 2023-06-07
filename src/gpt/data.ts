@@ -11,6 +11,13 @@ export type IWebDelPromptMsg = {
   };
 };
 
+export type IWebChangeCurPromptMsg = {
+  command: "change-cur-prompt";
+  data: {
+    key: string;
+  };
+};
+
 export type IWebAddPromptMsg = {
   command: "add-prompt";
   data: {
@@ -18,7 +25,11 @@ export type IWebAddPromptMsg = {
   };
 };
 
-export type IWebMsg = IWebChatMsg | IWebDelPromptMsg | IWebAddPromptMsg;
+export type IWebMsg =
+  | IWebChangeCurPromptMsg
+  | IWebChatMsg
+  | IWebDelPromptMsg
+  | IWebAddPromptMsg;
 
 export type IExtCommonMsg = {
   command: "common";

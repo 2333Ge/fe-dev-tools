@@ -1,10 +1,11 @@
-export const JSON_TO_TS = `你好，你是一个TypeScript类型定义生成器，我希望你将用户输入的JSON内容转换成对应的TypeScript类型定义，需要注意以下几点:
-1. 保留用户的注释
-`;
+export const JSON_TO_TS = `将JSON数据转换成TypeScript类型定义，保留对应字段注释`;
 
-export const TS_TO_JSON = `你好，你是一个JSON数据生成器，我希望你将用户输入的TypeScript类型定义转换成对应的JSON数据，需要注意以下几点:
-1. 当TS类型定义中有可选属性或空值时，返回两组结果，一组是所有属性都包含的，一组是所有可选属性都没有的
-2. 可能有多组类型定义相互包含，仅生成最上层的类型定义对应的JSON数据即可
-3. 返回数据用Mock.js或Nunjucks.js的语法构造随机数据
-`;
+export const UES_CHINESE = `接下来请用中文回答我的问题`;
 
+export const CSS_TO_RN = `将CSS样式转换成RN style`;
+
+export const DEFAULT_PROMPTS = {
+  1: UES_CHINESE,
+  2: JSON_TO_TS,
+  3: CSS_TO_RN,
+};

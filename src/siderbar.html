@@ -9,6 +9,14 @@
         padding: 0;
         font-family: Arial, sans-serif;
       }
+      #bottom-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #f2f2f2;
+        padding: 8px 10px;
+      }
       #chat-container {
         position: absolute;
         top: 0;
@@ -19,14 +27,8 @@
         padding: 10px;
       }
       #input-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: #f2f2f2;
         display: flex;
         align-items: center;
-        padding: 8px 10px;
       }
       #input-box {
         flex-grow: 1;
@@ -56,13 +58,19 @@
       }
       #function-panel {
         display: none;
-        position: absolute;
-        bottom: 50px;
-        left: 0;
-        right: 0;
-        height: 100px;
+        max-height: 100px;
         background-color: #f2f2f2;
-        padding: 10px;
+        overflow-y: scroll;
+      }
+      #cur-prompt {
+        color: #999;
+        font-size: small;
+        margin-bottom: 4px;
+        border-left: #ccc solid 2px;
+        padding-left: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .message {
         margin-bottom: 10px;
@@ -76,22 +84,35 @@
         background-color: #4caf50;
         color: white;
       }
+      .prompt {
+        color: #999;
+        font-size: small;
+        padding: 3px 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .prompt.cur {
+        color: #3072f6;
+      }
     </style>
   </head>
   <body>
     <div id="chat-container"></div>
-    <div id="input-container">
-      <textarea
-        type="text"
-        id="input-box"
-        placeholder="Type a message..."
-      ></textarea>
-      <button id="send-button">Send</button>
-      <button id="function-button">prompts</button>
+    <div id="bottom-container">
+      <div id="function-panel"></div>
+      <div id="cur-prompt">接下来请用中文回答我的问题</div>
+      <div id="input-container">
+        <textarea
+          type="text"
+          id="input-box"
+          placeholder="Type a message..."
+        ></textarea>
+        <button id="send-button">Send</button>
+        <button id="function-button">prompts</button>
+      </div>
     </div>
-    <div id="function-panel">
-      <div></div>
-    </div>
+
     <script>
       const loadingGifs = [
         "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
@@ -105,10 +126,30 @@
       const functionPanel = document.getElementById("function-panel");
       const chatContainerNode = document.getElementById("chat-container");
       const sendBtnNode = document.getElementById("send-button");
+      const curPromptNode = document.getElementById("cur-prompt");
 
-      let prompts = [];
+      let prompts = {};
       let curPromptKey = "";
       let messages = [];
+
+      const getCurPrompt = () => {
+        return prompts[curPromptKey] || "";
+      };
+
+      const changePromptsVisibility = (visible) => {
+        if (typeof visible === "undefined") {
+          if (functionPanel.style.display === "none") {
+            functionPanel.style.display = "block";
+            curPromptNode.style.display = "none";
+          } else {
+            functionPanel.style.display = "none";
+            curPromptNode.style.display = "block";
+          }
+        } else {
+          functionPanel.style.display = visible ? "block" : "none";
+          curPromptNode.style.display = visible ? "none" : "block";
+        }
+      };
 
       const updateMessageUI = () => {
         chatContainerNode.innerHTML = "";
@@ -124,11 +165,49 @@
               const loadingImg = document.createElement("img");
               loadingImg.src =
                 loadingGifs[Math.floor(Math.random() * loadingGifs.length)];
-              loadingImg.width = 30;
+              loadingImg.width = 50;
               loadingImg.alt = "loading";
               chatContainerNode.appendChild(loadingImg);
               break;
           }
+        });
+      };
+
+      const updateCurPromptUI = () => {
+        const curPrompt = getCurPrompt();
+        if (!curPrompt) {
+          curPromptNode.style.display = "none";
+        } else {
+          curPromptNode.style.display = "block";
+          curPromptNode.textContent = curPrompt;
+          curPromptNode.addEventListener("mouseover", function () {
+            curPromptNode.setAttribute("title", curPrompt);
+          });
+        }
+      };
+
+      const updatePromptsUI = () => {
+        functionPanel.innerHTML = "";
+        Object.keys(prompts).forEach((key) => {
+          const promptDiv = document.createElement("div");
+          promptDiv.classList.add("prompt");
+          if (key === curPromptKey) {
+            promptDiv.classList.add("cur");
+          }
+          promptDiv.textContent = prompts[key];
+          promptDiv.addEventListener("click", function () {
+            changePromptsVisibility(false);
+            vscode.postMessage({
+              command: "change-cur-prompt",
+              data: {
+                key,
+              },
+            });
+          });
+          promptDiv.addEventListener("mouseover", function () {
+            promptDiv.setAttribute("title", prompts[key]);
+          });
+          functionPanel.appendChild(promptDiv);
         });
       };
 
@@ -143,7 +222,8 @@
           },
         });
       });
-      /*输入框高度适配*/
+
+      /*输入框高度自适应*/
       inputNode.addEventListener("input", (e) => {
         inputNode.style.height = "30px";
         if (e.target.scrollHeight <= 150 && e.target.scrollHeight >= 30) {
@@ -155,11 +235,7 @@
       });
 
       functionButton.addEventListener("click", function () {
-        if (functionPanel.style.display === "none") {
-          functionPanel.style.display = "block";
-        } else {
-          functionPanel.style.display = "none";
-        }
+        changePromptsVisibility();
       });
 
       window.addEventListener("message", (event) => {
@@ -171,6 +247,8 @@
             messages = message.data.messages;
             curPromptKey = message.data.curPromptKey;
             updateMessageUI();
+            updatePromptsUI();
+            updateCurPromptUI();
             break;
         }
       });

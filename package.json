@@ -30,6 +30,10 @@
           "fe-dev-tools.prompts": {
             "type": "object",
             "description": "%prompts-description%"
+          },
+          "fe-dev-tools.curPromptKey": {
+            "type": "string",
+            "description": "%cur-prompt-key-description%"
           }
         }
       }

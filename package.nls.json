@@ -1,4 +1,5 @@
 {
   "extension-title": "fe-dev-tools",
-  "prompts-description": "预置prompts"
+  "prompts-description": "预置prompts",
+  "cur-prompt-key-description": "当前使用的 prompt key"
 }

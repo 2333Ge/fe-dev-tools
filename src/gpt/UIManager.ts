@@ -1,10 +1,9 @@
 import * as vscode from "vscode";
 import { IWebMsg, IChatMessage, IExtCommonMsg } from "./data";
-// import { getWebViewContent } from "./webviewContent";
 import { gptManager } from "./GPTManager";
-import { JSON_TO_TS } from "./prompts";
 import path = require("path");
 import fs = require("fs");
+import { DEFAULT_PROMPTS } from "./prompts";
 
 function getWebViewContent(
   context: vscode.ExtensionContext,
@@ -40,9 +39,23 @@ class UIManager {
 
   constructor() {
     this._initStatusBar();
+
     this._prompts = vscode.workspace
       .getConfiguration("fe-dev-tools")
       .get("prompts", {});
+    this._curPromptKey = vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .get("curPromptKey", "");
+    if (Object.keys(this._prompts).length === 0) {
+      this._prompts = DEFAULT_PROMPTS;
+      vscode.workspace
+        .getConfiguration("fe-dev-tools")
+        .update("prompts", DEFAULT_PROMPTS);
+    }
+  }
+
+  private get _curPrompt() {
+    return this._prompts[this._curPromptKey || ""] || "";
   }
 
   private _initStatusBar = () => {
@@ -80,7 +93,7 @@ class UIManager {
         ];
         this.sendMsgToWebView();
         gptManager
-          .getSingleCompletion("", data.content)
+          .getSingleCompletion(this._curPrompt, data.content)
           .then((res) => {
             this._messages[1].content = res;
             this._messages[1].status = "success";
@@ -91,6 +104,13 @@ class UIManager {
             this._messages[1].status = "error";
             this.sendMsgToWebView();
           });
+        break;
+      case "change-cur-prompt":
+        this._curPromptKey = data.key;
+        this.sendMsgToWebView();
+        vscode.workspace
+          .getConfiguration("fe-dev-tools")
+          .update("curPromptKey", this._curPromptKey);
         break;
     }
   };
