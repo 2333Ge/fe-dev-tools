@@ -21,7 +21,6 @@ class UIManager {
 
   onDidReceiveWebviewMessage = (message: IWebViewMessage) => {
     const { command, data } = message;
-    console.log('message====>',message);
     switch (command) {
       case "chat":
         this._messages = [
@@ -30,7 +29,7 @@ class UIManager {
         ];
         this._currentPanel!.webview.html = getWebViewContent(this._messages);
         gptManager
-          .getSingleCompletion('', data.content)
+          .getSingleCompletion("", data.content)
           .then((res) => {
             this._messages[1].content = res;
             this._messages[1].status = "success";
@@ -59,13 +58,13 @@ class UIManager {
     } else {
       this._currentPanel = vscode.window.createWebviewPanel(
         "catCoding",
-        "前端开发小工具",
+        "开发小工具",
         vscode.ViewColumn.Beside,
         {
           enableScripts: true,
         }
       );
-      this._currentPanel.webview.html = getWebViewContent();
+      this._currentPanel.webview.html = getWebViewContent(this._messages);
       this._currentPanel.webview.onDidReceiveMessage(
         this.onDidReceiveWebviewMessage,
         undefined

@@ -16,6 +16,8 @@ export const getMessageViewContent = (messages?: IChatMessage[]) => {
     .join("");
 };
 
+
+
 const INPUT_MAX_HEIGHT = 150;
 const INPUT_MIN_HEIGHT = 30;
 
