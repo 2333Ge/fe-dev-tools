@@ -6,6 +6,7 @@ import { uiManager } from "./gpt/UIManager";
 
 export function activate(context: vscode.ExtensionContext) {
   gptManager.init();
+  uiManager.init(context);
 
   let showTools = vscode.commands.registerCommand(
     "fe-dev-tools.showTools",

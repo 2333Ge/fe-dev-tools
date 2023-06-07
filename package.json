@@ -23,6 +23,17 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": [
+      {
+        "title": "%extension-title%",
+        "properties": {
+          "fe-dev-tools.prompts": {
+            "type": "object",
+            "description": "%prompts-description%"
+          }
+        }
+      }
+    ],
     "commands": [
       {
         "command": "fe-dev-tools.showTools",

@@ -1,15 +1,51 @@
 import * as vscode from "vscode";
-import { IWebViewMessage, IChatMessage } from "./data";
-import { getWebViewContent } from "./webviewContent";
+import { IWebMsg, IChatMessage, IExtCommonMsg } from "./data";
+// import { getWebViewContent } from "./webviewContent";
 import { gptManager } from "./GPTManager";
 import { JSON_TO_TS } from "./prompts";
+import path = require("path");
+import fs = require("fs");
+
+function getWebViewContent(
+  context: vscode.ExtensionContext,
+  templatePath: string
+) {
+  const resourcePath = path.join(context.extensionPath, templatePath);
+  const dirPath = path.dirname(resourcePath);
+  let html = fs.readFileSync(resourcePath, "utf-8");
+  // vscode不支持直接加载本地资源，需要替换成其专有路径格式，这里只是简单的将样式和JS的路径替换
+  html = html.replace(
+    /(<link.+?href="|<script.+?src="|<img.+?src=")(.+?)"/g,
+    (m, $1, $2) => {
+      return (
+        $1 +
+        vscode.Uri.file(path.resolve(dirPath, $2))
+          .with({ scheme: "vscode-resource" })
+          .toString() +
+        '"'
+      );
+    }
+  );
+  return html;
+}
 
 class UIManager {
   private _statusBar!: vscode.StatusBarItem;
   private _currentPanel?: vscode.WebviewPanel;
   private _messages: IChatMessage[] = [];
+  private _curPromptKey?: string;
+  private _prompts: Record<string, string>;
+
+  private _context!: vscode.ExtensionContext;
 
   constructor() {
+    this._initStatusBar();
+    this._prompts = vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .get("prompts", {});
+  }
+
+  private _initStatusBar = () => {
     this._statusBar = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right
     );
@@ -17,9 +53,24 @@ class UIManager {
     this._statusBar.text = "DEVTools";
     this._statusBar.tooltip = "打开工具面板";
     this._statusBar.show();
+  };
+
+  public init(context: vscode.ExtensionContext) {
+    this._context = context;
   }
 
-  onDidReceiveWebviewMessage = (message: IWebViewMessage) => {
+  private sendMsgToWebView = () => {
+    this._currentPanel?.webview.postMessage({
+      command: "common",
+      data: {
+        prompts: this._prompts,
+        curPromptKey: this._curPromptKey,
+        messages: this._messages,
+      },
+    } as IExtCommonMsg);
+  };
+
+  onDidReceiveWebviewMessage = (message: IWebMsg) => {
     const { command, data } = message;
     switch (command) {
       case "chat":
@@ -27,22 +78,18 @@ class UIManager {
           { role: "user", content: data.content, status: "success" },
           { role: "assistant", content: "", status: "pending" },
         ];
-        this._currentPanel!.webview.html = getWebViewContent(this._messages);
+        this.sendMsgToWebView();
         gptManager
           .getSingleCompletion("", data.content)
           .then((res) => {
             this._messages[1].content = res;
             this._messages[1].status = "success";
-            this._currentPanel!.webview.html = getWebViewContent(
-              this._messages
-            );
+            this.sendMsgToWebView();
           })
           .catch((err: Error) => {
             this._messages[1].content = err.message;
             this._messages[1].status = "error";
-            this._currentPanel!.webview.html = getWebViewContent(
-              this._messages
-            );
+            this.sendMsgToWebView();
           });
         break;
     }
@@ -53,7 +100,6 @@ class UIManager {
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
     if (this._currentPanel) {
-      // If we already have a panel, show it in the target column
       this._currentPanel.reveal(columnToShowIn);
     } else {
       this._currentPanel = vscode.window.createWebviewPanel(
@@ -64,7 +110,10 @@ class UIManager {
           enableScripts: true,
         }
       );
-      this._currentPanel.webview.html = getWebViewContent(this._messages);
+      this._currentPanel.webview.html = getWebViewContent(
+        this._context,
+        "src/siderbar.html"
+      );
       this._currentPanel.webview.onDidReceiveMessage(
         this.onDidReceiveWebviewMessage,
         undefined
@@ -72,6 +121,8 @@ class UIManager {
       this._currentPanel.onDidDispose(() => {
         this._currentPanel = undefined;
       });
+
+      this.sendMsgToWebView();
     }
   };
 }

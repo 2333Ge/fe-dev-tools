@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <title>Chat Interface</title>
     <style>
-      /* Set up basic layout */
       body {
         margin: 0;
         padding: 0;
@@ -65,27 +64,22 @@
         background-color: #f2f2f2;
         padding: 10px;
       }
-      /* Style chat messages */
       .message {
         margin-bottom: 10px;
         padding: 10px;
         border-radius: 5px;
         background-color: #f2f2f2;
         white-space: break-spaces;
+        color: #15161f;
       }
-      .message.sent {
+      .message.user {
         background-color: #4caf50;
         color: white;
       }
     </style>
   </head>
   <body>
-    <div id="chat-container">
-      <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" width="30" alt="loading" />
-      <!-- Example chat messages -->
-      <div class="message">Hello!</div>
-      <div class="message sent">Hi there!</div>
-    </div>
+    <div id="chat-container"></div>
     <div id="input-container">
       <textarea
         type="text"
@@ -93,34 +87,91 @@
         placeholder="Type a message..."
       ></textarea>
       <button id="send-button">Send</button>
+      <button id="function-button">prompts</button>
     </div>
-    <div id="function-panel"></div>
+    <div id="function-panel">
+      <div></div>
+    </div>
     <script>
+      const loadingGifs = [
+        "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
+        "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
+        "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif",
+      ];
+      const vscode = acquireVsCodeApi();
+
       const inputNode = document.getElementById("input-box");
-      document
-        .getElementById("send-button")
-        .addEventListener("click", function () {
-          const message = inputNode.value;
-          inputBox.value = "";
-          const messageDiv = document.createElement("div");
-          messageDiv.classList.add("message", "sent");
-          messageDiv.textContent = message;
-          document.getElementById("chat-container").appendChild(messageDiv);
+      const functionButton = document.getElementById("function-button");
+      const functionPanel = document.getElementById("function-panel");
+      const chatContainerNode = document.getElementById("chat-container");
+      const sendBtnNode = document.getElementById("send-button");
+
+      let prompts = [];
+      let curPromptKey = "";
+      let messages = [];
+
+      const updateMessageUI = () => {
+        chatContainerNode.innerHTML = "";
+        messages.forEach((message) => {
+          switch (message.status) {
+            case "success":
+              const messageDiv = document.createElement("div");
+              messageDiv.classList.add("message", message.role);
+              messageDiv.textContent = message.content;
+              chatContainerNode.appendChild(messageDiv);
+              break;
+            case "pending":
+              const loadingImg = document.createElement("img");
+              loadingImg.src =
+                loadingGifs[Math.floor(Math.random() * loadingGifs.length)];
+              loadingImg.width = 30;
+              loadingImg.alt = "loading";
+              chatContainerNode.appendChild(loadingImg);
+              break;
+          }
         });
+      };
+
+      sendBtnNode.addEventListener("click", function () {
+        const content = inputNode.value;
+        if (!content) return;
+        inputNode.value = "";
+        vscode.postMessage({
+          command: "chat",
+          data: {
+            content,
+          },
+        });
+      });
+      /*输入框高度适配*/
       inputNode.addEventListener("input", (e) => {
         inputNode.style.height = "30px";
         if (e.target.scrollHeight <= 150 && e.target.scrollHeight >= 30) {
           inputNode.style.height = e.target.scrollHeight + "px";
         }
-        if(e.target.scrollHeight > 150){
+        if (e.target.scrollHeight > 150) {
           inputNode.style.height = 150 + "px";
         }
       });
-      functionButton.addEventListener("click", function() {
+
+      functionButton.addEventListener("click", function () {
         if (functionPanel.style.display === "none") {
           functionPanel.style.display = "block";
         } else {
           functionPanel.style.display = "none";
+        }
+      });
+
+      window.addEventListener("message", (event) => {
+        const message = event.data;
+
+        switch (message.command) {
+          case "common":
+            prompts = message.data.prompts;
+            messages = message.data.messages;
+            curPromptKey = message.data.curPromptKey;
+            updateMessageUI();
+            break;
         }
       });
     </script>

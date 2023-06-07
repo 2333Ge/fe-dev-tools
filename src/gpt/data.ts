@@ -1,9 +1,37 @@
-export type IWebViewMessage = {
+export type IWebChatMsg = {
   command: "chat";
   data: {
     content: string;
   };
 };
+export type IWebDelPromptMsg = {
+  command: "delete-prompt";
+  data: {
+    key: string;
+  };
+};
+
+export type IWebAddPromptMsg = {
+  command: "add-prompt";
+  data: {
+    prompt: string;
+  };
+};
+
+export type IWebMsg = IWebChatMsg | IWebDelPromptMsg | IWebAddPromptMsg;
+
+export type IExtCommonMsg = {
+  command: "common";
+  data: {
+    prompts: Record<string, string>;
+    curPromptKey: string;
+    messages: IChatMessage[];
+  };
+};
+
+export type IExtMsg = IExtCommonMsg;
+
+/*-----------------分割线-----------------------*/
 
 export type IChatMessage = {
   role: "system" | "user" | "assistant";
@@ -11,9 +39,3 @@ export type IChatMessage = {
   name?: string;
   status: "pending" | "success" | "error";
 };
-
-export type IConfig = {
-  prompt: string;
-  placeholder: string;
-};
-
