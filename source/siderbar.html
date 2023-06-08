@@ -72,6 +72,13 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      #not-use-prompt {
+      }
+      #cur-prompt-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
       .message {
         margin-bottom: 10px;
         padding: 10px;
@@ -101,7 +108,10 @@
     <div id="chat-container"></div>
     <div id="bottom-container">
       <div id="function-panel"></div>
-      <div id="cur-prompt">接下来请用中文回答我的问题</div>
+      <div id="cur-prompt-container">
+        <div id="cur-prompt"></div>
+        <img src="./close.svg" id="not-use-prompt" width="10" />
+      </div>
       <div id="input-container">
         <textarea
           type="text"
@@ -127,6 +137,10 @@
       const chatContainerNode = document.getElementById("chat-container");
       const sendBtnNode = document.getElementById("send-button");
       const curPromptNode = document.getElementById("cur-prompt");
+      const curPromptContainer = document.getElementById(
+        "cur-prompt-container"
+      );
+      const notUsePromptNode = document.getElementById("not-use-prompt");
 
       let prompts = {};
       let curPromptKey = "";
@@ -138,16 +152,23 @@
 
       const changePromptsVisibility = (visible) => {
         if (typeof visible === "undefined") {
-          if (functionPanel.style.display === "none") {
+          if (
+            functionPanel.style.display === "none" ||
+            !functionPanel.style.display
+          ) {
             functionPanel.style.display = "block";
-            curPromptNode.style.display = "none";
+            curPromptContainer.style.display = "none";
           } else {
             functionPanel.style.display = "none";
-            curPromptNode.style.display = "block";
+            if (getCurPrompt()) {
+              curPromptContainer.style.display = "flex";
+            }
           }
         } else {
           functionPanel.style.display = visible ? "block" : "none";
-          curPromptNode.style.display = visible ? "none" : "block";
+          (curPromptContainer.style.display = visible || !getCurPrompt())
+            ? "none"
+            : "flex";
         }
       };
 
@@ -176,9 +197,9 @@
       const updateCurPromptUI = () => {
         const curPrompt = getCurPrompt();
         if (!curPrompt) {
-          curPromptNode.style.display = "none";
+          curPromptContainer.style.display = "none";
         } else {
-          curPromptNode.style.display = "block";
+          curPromptContainer.style.display = "flex";
           curPromptNode.textContent = curPrompt;
           curPromptNode.addEventListener("mouseover", function () {
             curPromptNode.setAttribute("title", curPrompt);
@@ -219,6 +240,15 @@
           command: "chat",
           data: {
             content,
+          },
+        });
+      });
+
+      notUsePromptNode.addEventListener("click", function () {
+        vscode.postMessage({
+          command: "change-cur-prompt",
+          data: {
+            key: "",
           },
         });
       });
