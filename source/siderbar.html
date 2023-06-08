@@ -72,8 +72,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      #not-use-prompt {
-      }
       #cur-prompt-container {
         display: flex;
         align-items: center;
@@ -101,6 +99,12 @@
       }
       .prompt.cur {
         color: #3072f6;
+      }
+      .prompt_container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 0px;
       }
     </style>
   </head>
@@ -177,6 +181,7 @@
         messages.forEach((message) => {
           switch (message.status) {
             case "success":
+            case "error":
               const messageDiv = document.createElement("div");
               messageDiv.classList.add("message", message.role);
               messageDiv.textContent = message.content;
@@ -210,11 +215,22 @@
       const updatePromptsUI = () => {
         functionPanel.innerHTML = "";
         Object.keys(prompts).forEach((key) => {
+          const promptContainerDiv = document.createElement("div");
           const promptDiv = document.createElement("div");
+          const delNode = notUsePromptNode.cloneNode();
+          promptContainerDiv.classList.add("prompt_container");
           promptDiv.classList.add("prompt");
           if (key === curPromptKey) {
             promptDiv.classList.add("cur");
           }
+          delNode.addEventListener("click", function () {
+            vscode.postMessage({
+              command: "delete-prompt",
+              data: {
+                key,
+              },
+            });
+          });
           promptDiv.textContent = prompts[key];
           promptDiv.addEventListener("click", function () {
             changePromptsVisibility(false);
@@ -228,7 +244,9 @@
           promptDiv.addEventListener("mouseover", function () {
             promptDiv.setAttribute("title", prompts[key]);
           });
-          functionPanel.appendChild(promptDiv);
+          promptContainerDiv.appendChild(promptDiv);
+          promptContainerDiv.appendChild(delNode);
+          functionPanel.appendChild(promptContainerDiv);
         });
       };
 

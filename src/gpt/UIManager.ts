@@ -5,6 +5,7 @@ import {
   IExtCommonMsg,
   IWebChatMsg,
   IWebChangeCurPromptMsg,
+  IWebDelPromptMsg,
 } from "./data";
 import { gptManager } from "./GPTManager";
 import path = require("path");
@@ -35,30 +36,48 @@ class UIManager {
   private _currentPanel?: vscode.WebviewPanel;
   private _messages: IChatMessage[] = [];
   private _curPromptKey?: string;
-  private _prompts: Record<string, string>;
+  private _prompts: Map<string, string> = new Map();
 
   private _context!: vscode.ExtensionContext;
 
   constructor() {
     this._initStatusBar();
+    this._initConfiguration();
+  }
 
-    this._prompts = vscode.workspace
-      .getConfiguration("fe-dev-tools")
-      .get("prompts", {});
-    this._curPromptKey = vscode.workspace
-      .getConfiguration("fe-dev-tools")
-      .get("curPromptKey", "");
-    if (Object.keys(this._prompts).length === 0) {
-      this._prompts = DEFAULT_PROMPTS;
-      vscode.workspace
-        .getConfiguration("fe-dev-tools")
-        .update("prompts", DEFAULT_PROMPTS);
-    }
+  public init(context: vscode.ExtensionContext) {
+    this._context = context;
   }
 
   private get _curPrompt() {
-    return this._prompts[this._curPromptKey || ""] || "";
+    return this._prompts.get(this._curPromptKey || "") || "";
   }
+
+  private get _promptsObj() {
+    const obj: Record<string, string> = {};
+    this._prompts.forEach((value, key) => {
+      obj[key] = value;
+    });
+    return obj;
+  }
+
+  private _initConfiguration = () => {
+    this._curPromptKey = vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .get("curPromptKey", "");
+    if (!vscode.workspace.getConfiguration("fe-dev-tools").has("prompts")) {
+      this._prompts = new Map(Object.entries(DEFAULT_PROMPTS));
+      vscode.workspace
+        .getConfiguration("fe-dev-tools")
+        .update("prompts", DEFAULT_PROMPTS);
+    } else {
+      this._prompts = new Map(
+        Object.entries(
+          vscode.workspace.getConfiguration("fe-dev-tools").get("prompts", {})
+        )
+      );
+    }
+  };
 
   private _initStatusBar = () => {
     this._statusBar = vscode.window.createStatusBarItem(
@@ -70,15 +89,11 @@ class UIManager {
     this._statusBar.show();
   };
 
-  public init(context: vscode.ExtensionContext) {
-    this._context = context;
-  }
-
   private sendMsgToWebView = () => {
     this._currentPanel?.webview.postMessage({
       command: "common",
       data: {
-        prompts: this._prompts,
+        prompts: this._promptsObj,
         curPromptKey: this._curPromptKey,
         messages: this._messages,
       },
@@ -115,7 +130,17 @@ class UIManager {
       .update("curPromptKey", this._curPromptKey);
   };
 
-  onDidReceiveWebviewMessage = (message: IWebMsg) => {
+  private handleDelCurPrompt = (message: IWebDelPromptMsg) => {
+    const { data } = message;
+    this._curPromptKey = "";
+    this._prompts.delete(data.key);
+    this.sendMsgToWebView();
+    vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .update("prompts", this._promptsObj);
+  };
+
+  private onDidReceiveWebviewMessage = (message: IWebMsg) => {
     console.log("message====>", message);
     const { command } = message;
     switch (command) {
@@ -125,10 +150,13 @@ class UIManager {
       case "change-cur-prompt":
         this.handleChangeCurPrompt(message as IWebChangeCurPromptMsg);
         break;
+      case "delete-prompt":
+        this.handleDelCurPrompt(message as IWebDelPromptMsg);
+        break;
     }
   };
 
-  show = () => {
+  public show = () => {
     const columnToShowIn = vscode.window.activeTextEditor
       ? vscode.window.activeTextEditor.viewColumn
       : undefined;
