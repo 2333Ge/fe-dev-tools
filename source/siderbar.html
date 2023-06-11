@@ -8,42 +8,47 @@
         margin: 0;
         padding: 0;
         font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        font-size: var(--vscode-font-size);
       }
       #bottom-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: #f2f2f2;
+        background-color: var(--vscode-editor-background);
         padding: 8px 10px;
+        border-top: 1px solid var(--vscode-panel-border);
       }
       #chat-container {
-        position: absolute;
-        top: 0;
-        bottom: 100px;
-        left: 0;
-        right: 0;
+        flex: 1;
         overflow-y: scroll;
         padding: 10px;
       }
       #input-container {
+        border-radius: 2px;
         display: flex;
         align-items: center;
       }
       #input-box {
         flex-grow: 1;
-        border: none;
-        border-radius: 5px;
-        padding: 5px;
+        border-radius: 2px;
+        padding: 8px 10px;
         margin-right: 10px;
         height: auto;
+        border: 1px solid var(--vscode-input-border);
+        font-size: var(--vscode-input-font-size);
+        background-color: var(--vscode-input-background);
+        color: var(--vscode-input-color);
       }
       #send-button {
         height: 30px;
         border: none;
         border-radius: 5px;
-        background-color: #4caf50;
-        color: white;
+        background-color: var(
+          --vscode-button-background
+        ); /*替换为vscode官方推荐的按钮背景颜色变量*/
+        color: var(
+          --vscode-button-foreground
+        ); /*替换为vscode官方推荐的按钮前景颜色变量*/
         padding: 5px 10px;
         cursor: pointer;
       }
@@ -63,18 +68,45 @@
       }
       #add-prompt-panel {
         display: none;
+        align-items: center;
+        padding: 10px 0;
+      }
+      #add-prompt-input {
+        flex-shrink: 1;
+        border-radius: 5px;
+        padding: 5px;
+        margin-right: 10px;
+        height: auto;
+        min-width: 50vw;
+        border: 1px solid var(--vscode-input-border);
+        background-color: var(--vscode-input-background);
+        font-size: var(--vscode-input-font-size);
+        color: var(--vscode-input-color);
+      }
+      #add-prompt-confirm {
+        height: 30px;
+        border: none;
+        border-radius: 5px;
+        background-color: var(
+          --vscode-button-background
+        ); /*替换为vscode官方推荐的按钮背景颜色变量*/
+        color: var(
+          --vscode-button-foreground
+        ); /*替换为vscode官方推荐的按钮前景颜色变量*/
+        padding: 5px 10px;
+        cursor: pointer;
       }
       #function-panel {
         display: none;
         max-height: 100px;
-        background-color: #f2f2f2;
         overflow-y: scroll;
       }
       #cur-prompt {
-        color: #999;
-        font-size: small;
+        color: var(
+          --vscode-descriptionForeground
+        ); /*替换为vscode官方推荐的描述文字颜色变量*/
         margin-bottom: 4px;
-        border-left: #ccc solid 2px;
+        border-left: var(--vscode-editor-foreground) solid 2px; /*替换为vscode官方推荐的文本颜色变量*/
         padding-left: 4px;
         white-space: nowrap;
         overflow: hidden;
@@ -85,39 +117,59 @@
         align-items: center;
         justify-content: space-between;
       }
-
+      /*绘制一个空视图用于clone*/
+      #close-svg {
+        display: none;
+      }
       .message {
         margin-bottom: 10px;
         padding: 10px;
         border-radius: 5px;
-        background-color: #f2f2f2;
         white-space: break-spaces;
-        color: #15161f;
+        color: var(
+          --vscode-editor-foreground
+        ); /*替换为vscode官方推荐的文本颜色变量*/
       }
       .message.user {
-        background-color: #4caf50;
-        color: white;
+        background-color: var(--vscode-button-background);
+
+        color: var(
+          --vscode-button-foreground
+        ); /*替换为vscode官方推荐的按钮前景颜色变量*/
       }
       .prompt {
-        color: #999;
-        font-size: small;
-        padding: 3px 10px;
+        padding: 3px 0;
+        margin-right: 12px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-      }
-      .prompt.cur {
-        color: #3072f6;
+        flex: 1;
       }
       .prompt_container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 4px 0px;
+        padding: 4px 6px;
+        color: var(
+          --vscode-descriptionForeground
+        ); /*替换为vscode官方推荐的描述文字颜色变量*/
+      }
+      .prompt_container.cur {
+        color: var(
+          --vscode-prominentForeground
+        ); /*替换为vscode官方推荐的突出文字颜色变量*/
+        background-color: var(--vscode-list-activeSelectionBackground);
+      }
+      .icon {
+        fill: var(
+          --vscode-icon-foreground
+        ); /*替换为vscode官方推荐的按钮前景颜色变量*/
       }
     </style>
   </head>
   <body>
+    <?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
     <div id="chat-container"></div>
     <div id="bottom-container">
       <div id="function-panel"></div>
@@ -125,14 +177,25 @@
         <textarea
           type="text"
           id="add-prompt-input"
-          placeholder="input a message..."
+          placeholder="input your prompt..."
         ></textarea>
-        <button id="add-prompt-confirm">添加</button>
+        <button id="add-prompt-confirm">add</button>
       </div>
 
       <div id="cur-prompt-container">
         <div id="cur-prompt"></div>
-        <img src="./close.svg" id="not-use-prompt" width="10" />
+        <svg
+          id="not-use-prompt"
+          class="icon"
+          viewBox="0 0 1024 1024"
+          version="1.1"
+          width="10"
+          height="10"
+        >
+          <path
+            d="M570.514286 512l292.571428-292.571429c14.628571-14.628571 14.628571-43.885714 0-58.514285-14.628571-14.628571-43.885714-14.628571-58.514285 0l-292.571429 292.571428-292.571429-292.571428c-14.628571-14.628571-43.885714-14.628571-58.514285 0-21.942857 14.628571-21.942857 43.885714 0 58.514285l292.571428 292.571429-292.571428 292.571429c-14.628571 14.628571-14.628571 43.885714 0 58.514285 14.628571 14.628571 43.885714 14.628571 58.514285 0l292.571429-292.571428 292.571429 292.571428c14.628571 14.628571 43.885714 14.628571 58.514285 0 14.628571-14.628571 14.628571-43.885714 0-58.514285l-292.571428-292.571429z"
+          ></path>
+        </svg>
       </div>
       <div id="input-container">
         <textarea
@@ -141,18 +204,32 @@
           placeholder="Type a message..."
         ></textarea>
         <button id="send-button">Send</button>
-        <img
-          src="./list.svg"
-          width="20"
+        <svg
+          class="icon"
+          viewBox="0 0 1024 1024"
+          version="1.1"
           id="function-button"
-          title="选择 prompts"
-        />
-        <img
-          src="./add.svg"
           width="20"
+          height="20"
+          title="选择 prompts"
+        >
+          <path
+            d="M187.392 70.656q28.672 0 48.64 19.456t19.968 48.128l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.128t47.616-19.456l54.272 0zM889.856 70.656q27.648 0 47.616 19.456t19.968 48.128l0 52.224q0 28.672-19.968 48.64t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.128t48.64-19.456l437.248 0zM187.392 389.12q28.672 0 48.64 19.968t19.968 48.64l0 52.224q0 27.648-19.968 47.616t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-47.616l0-52.224q0-28.672 19.968-48.64t47.616-19.968l54.272 0zM889.856 389.12q27.648 0 47.616 19.968t19.968 48.64l0 52.224q0 27.648-19.968 47.616t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-47.616l0-52.224q0-28.672 19.968-48.64t48.64-19.968l437.248 0zM187.392 708.608q28.672 0 48.64 19.968t19.968 47.616l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-48.64l0-52.224q0-27.648 19.968-47.616t47.616-19.968l54.272 0zM889.856 708.608q27.648 0 47.616 19.968t19.968 47.616l0 52.224q0 28.672-19.968 48.64t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-27.648 19.968-47.616t48.64-19.968l437.248 0z"
+          ></path>
+        </svg>
+        <svg
           id="add-prompt-button"
-          title="新增 prompt"
-        />
+          class="icon"
+          viewBox="0 0 1024 1024"
+          version="1.1"
+          width="20"
+          height="20"
+          title="新增 prompts"
+        >
+          <path
+            d="M590.77 571.077h324.922c15.754 0 29.539-13.785 29.539-29.539v-59.076c0-15.754-13.785-29.539-29.539-29.539H590.77c-11.815 0-19.692-7.877-19.692-19.692V108.308c0-15.754-13.785-29.539-29.539-29.539h-59.076c-15.754 0-29.539 13.785-29.539 29.539V433.23c0 11.815-7.877 19.692-19.692 19.692H108.308c-15.754 0-29.539 13.785-29.539 29.539v59.076c0 15.754 13.785 29.539 29.539 29.539H433.23c11.815 0 19.692 7.877 19.692 19.692v324.923c0 15.754 13.785 29.539 29.539 29.539h59.076c15.754 0 29.539-13.785 29.539-29.539V590.77c0-11.815 7.877-19.692 19.692-19.692z"
+          ></path>
+        </svg>
       </div>
     </div>
 
@@ -216,8 +293,8 @@
             }
             break;
           case "add-prompt":
-            if (addPromptPanel.style.display !== "block") {
-              addPromptPanel.style.display = "block";
+            if (addPromptPanel.style.display !== "flex") {
+              addPromptPanel.style.display = "flex";
               functionPanel.style.display = "none";
               curPromptContainer.style.display = "none";
             } else {
@@ -261,11 +338,11 @@
         Object.keys(prompts).forEach((key) => {
           const promptContainerDiv = document.createElement("div");
           const promptDiv = document.createElement("div");
-          const delNode = notUsePromptNode.cloneNode();
+          const delNode = notUsePromptNode.cloneNode(true);
           promptContainerDiv.classList.add("prompt_container");
           promptDiv.classList.add("prompt");
           if (key === curPromptKey) {
-            promptDiv.classList.add("cur");
+            promptContainerDiv.classList.add("cur");
           }
           delNode.addEventListener("click", function () {
             vscode.postMessage({
@@ -298,6 +375,7 @@
         const content = inputNode.value;
         if (!content) return;
         inputNode.value = "";
+        inputNode.style.height = "30px";
         vscode.postMessage({
           command: "chat",
           data: {
@@ -324,42 +402,37 @@
         const content = addPromptInput.value;
         if (!content) return;
         addPromptInput.value = "";
+        addPromptInput.style.height = "30px";
         vscode.postMessage({
           command: "add-prompt",
           data: {
             content,
           },
         });
-        changeExtraVisibleItem('add-prompt')
+        changeExtraVisibleItem("add-prompt");
       });
+
+      const inputAutoHeight = (e, node) => {
+        node.style.height = "30px";
+        if (e.target.scrollHeight <= 150 && e.target.scrollHeight >= 30) {
+          node.style.height = e.target.scrollHeight + "px";
+        }
+        if (e.target.scrollHeight > 150) {
+          node.style.height = 150 + "px";
+        }
+      };
 
       /*输入框高度自适应*/
       inputNode.addEventListener("input", (e) => {
-        inputNode.style.height = "30px";
-        if (e.target.scrollHeight <= 150 && e.target.scrollHeight >= 30) {
-          inputNode.style.height = e.target.scrollHeight + "px";
-        }
-        if (e.target.scrollHeight > 150) {
-          inputNode.style.height = 150 + "px";
-        }
+        inputAutoHeight(e, inputNode);
+      });
+
+      addPromptInput.addEventListener("input", (e) => {
+        inputAutoHeight(e, addPromptInput);
       });
 
       functionButton.addEventListener("click", function () {
         changeExtraVisibleItem("prompts");
-      });
-
-      addPromptInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") {
-          const content = addPromptInput.value;
-          if (!content) return;
-          addPromptInput.value = "";
-          vscode.postMessage({
-            command: "add-prompt",
-            data: {
-              content,
-            },
-          });
-        }
       });
 
       /** 处理插件消息*/
