@@ -66,7 +66,12 @@ class UIManager {
     this._curPromptKey = vscode.workspace
       .getConfiguration("fe-dev-tools")
       .get("curPromptKey", "");
-    if (!vscode.workspace.getConfiguration("fe-dev-tools").has("prompts")) {
+
+    if (
+      Object.keys(
+        vscode.workspace.getConfiguration("fe-dev-tools").get("prompts", {})
+      ).length === 0
+    ) {
       this._prompts = new Map(Object.entries(DEFAULT_PROMPTS));
       vscode.workspace
         .getConfiguration("fe-dev-tools")
