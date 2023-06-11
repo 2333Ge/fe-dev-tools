@@ -11,6 +11,7 @@ import { gptManager } from "./GPTManager";
 import path = require("path");
 import fs = require("fs");
 import { DEFAULT_PROMPTS } from "./prompts";
+import { IWebAddPromptMsg } from "./data";
 
 function getWebViewContent(
   context: vscode.ExtensionContext,
@@ -22,7 +23,7 @@ function getWebViewContent(
   let html = fs.readFileSync(resourcePath, "utf-8");
 
   html = html.replace(
-    /(<link.+?href="|<script.+?src="|<img.+?src=")(.+?)"/g,
+    /(<link[\s\S]+?href="|<script[\s\S]+?src="|<img[\s\S]+?src=")(.+?)"/g,
     (m, $1, $2) => {
       const newPath = vscode.Uri.file(path.resolve(dirPath, $2));
       return $1 + webView.asWebviewUri(newPath) + '"';
@@ -89,7 +90,7 @@ class UIManager {
     this._statusBar.show();
   };
 
-  private sendMsgToWebView = () => {
+  private sendCommonMsgToWebView = () => {
     this._currentPanel?.webview.postMessage({
       command: "common",
       data: {
@@ -106,25 +107,25 @@ class UIManager {
       { role: "user", content: data.content, status: "success" },
       { role: "assistant", content: "", status: "pending" },
     ];
-    this.sendMsgToWebView();
+    this.sendCommonMsgToWebView();
     gptManager
       .getSingleCompletion(this._curPrompt, data.content)
       .then((res) => {
         this._messages[1].content = res;
         this._messages[1].status = "success";
-        this.sendMsgToWebView();
+        this.sendCommonMsgToWebView();
       })
       .catch((err: Error) => {
         this._messages[1].content = err.message;
         this._messages[1].status = "error";
-        this.sendMsgToWebView();
+        this.sendCommonMsgToWebView();
       });
   };
 
   private handleChangeCurPrompt = (message: IWebChangeCurPromptMsg) => {
     const { data } = message;
     this._curPromptKey = data.key;
-    this.sendMsgToWebView();
+    this.sendCommonMsgToWebView();
     vscode.workspace
       .getConfiguration("fe-dev-tools")
       .update("curPromptKey", this._curPromptKey);
@@ -134,12 +135,32 @@ class UIManager {
     const { data } = message;
     this._curPromptKey = "";
     this._prompts.delete(data.key);
-    this.sendMsgToWebView();
+    this.sendCommonMsgToWebView();
     vscode.workspace
       .getConfiguration("fe-dev-tools")
       .update("prompts", this._promptsObj);
   };
 
+  private handleAddPrompt = (message: IWebAddPromptMsg) => {
+    const { data } = message;
+    const key =
+      Math.max(
+        ...Object.keys(this._promptsObj).map((key) => Number(key) || 0)
+      ) + 1;
+
+    this._curPromptKey = key + "";
+    this._prompts.set(this._curPromptKey, data.content);
+    this.sendCommonMsgToWebView();
+    vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .update("prompts", this._promptsObj);
+    vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .update("curPromptKey", this._curPromptKey);
+  };
+  /**
+   * 处理webview发来的消息
+   */
   private onDidReceiveWebviewMessage = (message: IWebMsg) => {
     console.log("message====>", message);
     const { command } = message;
@@ -153,6 +174,9 @@ class UIManager {
       case "delete-prompt":
         this.handleDelCurPrompt(message as IWebDelPromptMsg);
         break;
+      case "add-prompt":
+        this.handleAddPrompt(message as IWebAddPromptMsg);
+        break;
     }
   };
 
@@ -165,7 +189,7 @@ class UIManager {
     } else {
       this._currentPanel = vscode.window.createWebviewPanel(
         "fe-dev-tools",
-        "开发小工具",
+        "chat",
         vscode.ViewColumn.Beside,
         {
           enableScripts: true,
@@ -185,7 +209,7 @@ class UIManager {
         this._currentPanel = undefined;
       });
 
-      this.sendMsgToWebView();
+      this.sendCommonMsgToWebView();
     }
   };
 }

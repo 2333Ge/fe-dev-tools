@@ -48,13 +48,21 @@
         cursor: pointer;
       }
       #function-button {
-        height: 30px;
-        border: none;
-        border-radius: 5px;
-        background-color: #f2f2f2;
-        color: black;
-        padding: 5px 10px;
-        cursor: pointer;
+        margin-left: 6px;
+        padding: 4px;
+      }
+      #function-button:hover {
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      }
+      #add-prompt-button {
+        margin-left: 6px;
+        padding: 4px;
+      }
+      #add-prompt-button:hover {
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+      }
+      #add-prompt-panel {
+        display: none;
       }
       #function-panel {
         display: none;
@@ -77,6 +85,7 @@
         align-items: center;
         justify-content: space-between;
       }
+
       .message {
         margin-bottom: 10px;
         padding: 10px;
@@ -112,6 +121,15 @@
     <div id="chat-container"></div>
     <div id="bottom-container">
       <div id="function-panel"></div>
+      <div id="add-prompt-panel">
+        <textarea
+          type="text"
+          id="add-prompt-input"
+          placeholder="input a message..."
+        ></textarea>
+        <button id="add-prompt-confirm">添加</button>
+      </div>
+
       <div id="cur-prompt-container">
         <div id="cur-prompt"></div>
         <img src="./close.svg" id="not-use-prompt" width="10" />
@@ -123,15 +141,24 @@
           placeholder="Type a message..."
         ></textarea>
         <button id="send-button">Send</button>
-        <button id="function-button">prompts</button>
+        <img
+          src="./list.svg"
+          width="20"
+          id="function-button"
+          title="选择 prompts"
+        />
+        <img
+          src="./add.svg"
+          width="20"
+          id="add-prompt-button"
+          title="新增 prompt"
+        />
       </div>
     </div>
 
     <script>
       const loadingGifs = [
-        "https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif",
         "https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif",
-        "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif",
       ];
       const vscode = acquireVsCodeApi();
 
@@ -145,6 +172,10 @@
         "cur-prompt-container"
       );
       const notUsePromptNode = document.getElementById("not-use-prompt");
+      const addPromptButton = document.getElementById("add-prompt-button");
+      const addPromptPanel = document.getElementById("add-prompt-panel");
+      const addPromptInput = document.getElementById("add-prompt-input");
+      const addPromptConfirm = document.getElementById("add-prompt-confirm");
 
       let prompts = {};
       let curPromptKey = "";
@@ -154,25 +185,51 @@
         return prompts[curPromptKey] || "";
       };
 
-      const changePromptsVisibility = (visible) => {
-        if (typeof visible === "undefined") {
-          if (
-            functionPanel.style.display === "none" ||
-            !functionPanel.style.display
-          ) {
-            functionPanel.style.display = "block";
-            curPromptContainer.style.display = "none";
-          } else {
-            functionPanel.style.display = "none";
-            if (getCurPrompt()) {
-              curPromptContainer.style.display = "flex";
-            }
-          }
+      const showCurPromptIfValid = () => {
+        const curPrompt = getCurPrompt();
+        if (!curPrompt) {
+          curPromptContainer.style.display = "none";
         } else {
-          functionPanel.style.display = visible ? "block" : "none";
-          (curPromptContainer.style.display = visible || !getCurPrompt())
-            ? "none"
-            : "flex";
+          curPromptContainer.style.display = "flex";
+          curPromptNode.textContent = curPrompt;
+          curPromptNode.addEventListener("mouseover", function () {
+            curPromptNode.setAttribute("title", curPrompt);
+          });
+        }
+      };
+
+      /**
+       * 切换功能栏可见性，默认设置当前prompt可见，其他影长
+       * type: prompts | cur-prompt | add-prompt
+       *
+       */
+      const changeExtraVisibleItem = (type) => {
+        switch (type) {
+          case "prompts":
+            if (functionPanel.style.display !== "block") {
+              functionPanel.style.display = "block";
+              addPromptPanel.style.display = "none";
+              curPromptContainer.style.display = "none";
+            } else {
+              showCurPromptIfValid();
+              functionPanel.style.display = "none";
+            }
+            break;
+          case "add-prompt":
+            if (addPromptPanel.style.display !== "block") {
+              addPromptPanel.style.display = "block";
+              functionPanel.style.display = "none";
+              curPromptContainer.style.display = "none";
+            } else {
+              showCurPromptIfValid();
+              addPromptPanel.style.display = "none";
+            }
+            break;
+          default:
+            showCurPromptIfValid();
+            functionPanel.style.display = "none";
+            addPromptPanel.style.display = "none";
+            break;
         }
       };
 
@@ -199,19 +256,6 @@
         });
       };
 
-      const updateCurPromptUI = () => {
-        const curPrompt = getCurPrompt();
-        if (!curPrompt) {
-          curPromptContainer.style.display = "none";
-        } else {
-          curPromptContainer.style.display = "flex";
-          curPromptNode.textContent = curPrompt;
-          curPromptNode.addEventListener("mouseover", function () {
-            curPromptNode.setAttribute("title", curPrompt);
-          });
-        }
-      };
-
       const updatePromptsUI = () => {
         functionPanel.innerHTML = "";
         Object.keys(prompts).forEach((key) => {
@@ -233,7 +277,7 @@
           });
           promptDiv.textContent = prompts[key];
           promptDiv.addEventListener("click", function () {
-            changePromptsVisibility(false);
+            changeExtraVisibleItem();
             vscode.postMessage({
               command: "change-cur-prompt",
               data: {
@@ -271,6 +315,24 @@
         });
       });
 
+      addPromptButton.addEventListener("click", function () {
+        changeExtraVisibleItem("add-prompt");
+        addPromptInput.focus();
+      });
+
+      addPromptConfirm.addEventListener("click", function () {
+        const content = addPromptInput.value;
+        if (!content) return;
+        addPromptInput.value = "";
+        vscode.postMessage({
+          command: "add-prompt",
+          data: {
+            content,
+          },
+        });
+        changeExtraVisibleItem('add-prompt')
+      });
+
       /*输入框高度自适应*/
       inputNode.addEventListener("input", (e) => {
         inputNode.style.height = "30px";
@@ -283,9 +345,24 @@
       });
 
       functionButton.addEventListener("click", function () {
-        changePromptsVisibility();
+        changeExtraVisibleItem("prompts");
       });
 
+      addPromptInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          const content = addPromptInput.value;
+          if (!content) return;
+          addPromptInput.value = "";
+          vscode.postMessage({
+            command: "add-prompt",
+            data: {
+              content,
+            },
+          });
+        }
+      });
+
+      /** 处理插件消息*/
       window.addEventListener("message", (event) => {
         const message = event.data;
 
@@ -296,7 +373,7 @@
             curPromptKey = message.data.curPromptKey;
             updateMessageUI();
             updatePromptsUI();
-            updateCurPromptUI();
+            showCurPromptIfValid();
             break;
         }
       });

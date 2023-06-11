@@ -21,7 +21,7 @@ export type IWebChangeCurPromptMsg = {
 export type IWebAddPromptMsg = {
   command: "add-prompt";
   data: {
-    prompt: string;
+    content: string;
   };
 };
 
