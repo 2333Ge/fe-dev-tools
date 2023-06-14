@@ -83,6 +83,9 @@ class UIManager {
   };
 
   private _initStatusBar = () => {
+    if (this._statusBar) {
+      return;
+    }
     this._statusBar = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right
     );
