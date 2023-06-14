@@ -1,13 +1,16 @@
 import { Configuration, OpenAIApi } from "openai";
 import { OPENAI_API_KEY } from "../config";
+import * as vscode from "vscode";
 
 class GPTManager {
-  private _apiKey = OPENAI_API_KEY;
   private _openAIApi?: OpenAIApi;
 
   public init() {
+    const configAPIKey = vscode.workspace
+      .getConfiguration("fe-dev-tools")
+      .get("openaiApiKey", "");
     const configuration = new Configuration({
-      apiKey: this._apiKey,
+      apiKey: configAPIKey || OPENAI_API_KEY,
     });
     this._openAIApi = new OpenAIApi(configuration);
   }

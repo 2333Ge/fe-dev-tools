@@ -3,7 +3,7 @@
   "displayName": "fe-dev-tools",
   "publisher": "2333Ge",
   "description": "fe-dev-tools",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "repository": "https://github.com/2333Ge/fe-dev-tools",
   "icon": "source/logo.jpeg",
   "engines": {
@@ -34,6 +34,10 @@
           "fe-dev-tools.curPromptKey": {
             "type": "string",
             "description": "%cur-prompt-key-description%"
+          },
+          "fe-dev-tools.openaiApiKey": {
+            "type": "string",
+            "description": "%openai-key-description%"
           }
         }
       }

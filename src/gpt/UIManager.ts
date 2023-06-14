@@ -41,13 +41,10 @@ class UIManager {
 
   private _context!: vscode.ExtensionContext;
 
-  constructor() {
-    this._initStatusBar();
-    this._initConfiguration();
-  }
-
   public init(context: vscode.ExtensionContext) {
     this._context = context;
+    this._initStatusBar();
+    this._initConfiguration();
   }
 
   private get _curPrompt() {

@@ -13,7 +13,14 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(showTools);
+  const configChange = vscode.workspace.onDidChangeConfiguration((e) => {
+    if (e.affectsConfiguration("fe-dev-tools")) {
+      gptManager.init();
+      uiManager.init(context);
+    }
+  });
+
+  context.subscriptions.push(showTools, configChange);
 }
 
 export function deactivate() {}

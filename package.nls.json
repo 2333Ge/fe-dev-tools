@@ -1,5 +1,6 @@
 {
   "extension-title": "fe-dev-tools",
   "prompts-description": "预置prompts",
-  "cur-prompt-key-description": "当前使用的 prompt key"
+  "cur-prompt-key-description": "当前使用的 prompt key",
+  "openai-key-description": "自定义 openai api key"
 }
