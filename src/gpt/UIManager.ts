@@ -72,7 +72,7 @@ class UIManager {
       this._prompts = new Map(Object.entries(DEFAULT_PROMPTS));
       vscode.workspace
         .getConfiguration("fe-dev-tools")
-        .update("prompts", DEFAULT_PROMPTS);
+        .update("prompts", DEFAULT_PROMPTS, vscode.ConfigurationTarget.Global);
     } else {
       this._prompts = new Map(
         Object.entries(
@@ -133,7 +133,11 @@ class UIManager {
     this.sendCommonMsgToWebView();
     vscode.workspace
       .getConfiguration("fe-dev-tools")
-      .update("curPromptKey", this._curPromptKey);
+      .update(
+        "curPromptKey",
+        this._curPromptKey,
+        vscode.ConfigurationTarget.Global
+      );
   };
 
   private handleDelCurPrompt = (message: IWebDelPromptMsg) => {
@@ -143,7 +147,7 @@ class UIManager {
     this.sendCommonMsgToWebView();
     vscode.workspace
       .getConfiguration("fe-dev-tools")
-      .update("prompts", this._promptsObj);
+      .update("prompts", this._promptsObj, vscode.ConfigurationTarget.Global);
   };
 
   private handleAddPrompt = (message: IWebAddPromptMsg) => {
@@ -158,10 +162,14 @@ class UIManager {
     this.sendCommonMsgToWebView();
     vscode.workspace
       .getConfiguration("fe-dev-tools")
-      .update("prompts", this._promptsObj);
+      .update("prompts", this._promptsObj, vscode.ConfigurationTarget.Global);
     vscode.workspace
       .getConfiguration("fe-dev-tools")
-      .update("curPromptKey", this._curPromptKey);
+      .update(
+        "curPromptKey",
+        this._curPromptKey,
+        vscode.ConfigurationTarget.Global
+      );
   };
   /**
    * 处理webview发来的消息
