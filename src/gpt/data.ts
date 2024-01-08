@@ -25,11 +25,19 @@ export type IWebAddPromptMsg = {
   };
 };
 
+export type IWebCopyPromptMsg = {
+  command: "copy-prompt";
+  data: {
+    key: string;
+  };
+};
+
 export type IWebMsg =
   | IWebChangeCurPromptMsg
   | IWebChatMsg
   | IWebDelPromptMsg
-  | IWebAddPromptMsg;
+  | IWebAddPromptMsg
+  | IWebCopyPromptMsg;
 
 export type IExtCommonMsg = {
   command: "common";

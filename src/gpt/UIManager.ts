@@ -6,12 +6,15 @@ import {
   IWebChatMsg,
   IWebChangeCurPromptMsg,
   IWebDelPromptMsg,
+  IWebCopyPromptMsg,
 } from "./data";
 import { gptManager } from "./GPTManager";
 import path = require("path");
 import fs = require("fs");
 import { DEFAULT_PROMPTS } from "./prompts";
 import { IWebAddPromptMsg } from "./data";
+import { IStoppablePromiseRes, stoppablePromise } from "../utils/promise";
+import { copyTextToClipboard } from "../utils/common";
 
 function getWebViewContent(
   context: vscode.ExtensionContext,
@@ -38,8 +41,8 @@ class UIManager {
   private _messages: IChatMessage[] = [];
   private _curPromptKey?: string;
   private _prompts: Map<string, string> = new Map();
-
   private _context!: vscode.ExtensionContext;
+  private curChatPromise?: IStoppablePromiseRes<string>;
 
   public init(context: vscode.ExtensionContext) {
     this._context = context;
@@ -106,23 +109,38 @@ class UIManager {
     } as IExtCommonMsg);
   };
 
+  private clearInvalidMessage() {
+    this._messages = this._messages.filter((item) => item.status !== "success");
+  }
+
   private handleChatMessage = (message: IWebChatMsg) => {
     const { data } = message;
-    this._messages = [
+    this.clearInvalidMessage();
+    this._messages.push(
       { role: "user", content: data.content, status: "success" },
-      { role: "assistant", content: "", status: "pending" },
-    ];
+      { role: "assistant", content: "", status: "pending" }
+    );
     this.sendCommonMsgToWebView();
-    gptManager
-      .getSingleCompletion(this._curPrompt, data.content)
+    // 中断上次正在请求的
+    this.curChatPromise?.stop();
+    this.curChatPromise = stoppablePromise(() =>
+      gptManager.getCompletion(this._messages, this._curPrompt)
+    );
+    this.curChatPromise.promise
       .then((res) => {
-        this._messages[1].content = res;
-        this._messages[1].status = "success";
+        this._messages[this._messages.length - 1] = {
+          content: res,
+          role: "assistant",
+          status: "success",
+        };
         this.sendCommonMsgToWebView();
       })
       .catch((err: Error) => {
-        this._messages[1].content = err.message;
-        this._messages[1].status = "error";
+        this._messages[this._messages.length - 1] = {
+          content: err.message,
+          role: "assistant",
+          status: "error",
+        };
         this.sendCommonMsgToWebView();
       });
   };
@@ -148,6 +166,18 @@ class UIManager {
     vscode.workspace
       .getConfiguration("fe-dev-tools")
       .update("prompts", this._promptsObj, vscode.ConfigurationTarget.Global);
+  };
+
+  private handleCopyPrompt = (message: IWebCopyPromptMsg) => {
+    const { data } = message;
+    // 没key则表示没展开状态，复制当前的
+    const copyStr = this._prompts.get(data.key || this._curPromptKey!);
+    if (!copyStr) {
+      return;
+    }
+    copyTextToClipboard(copyStr).then(() => {
+      vscode.window.showInformationMessage("复制成功");
+    });
   };
 
   private handleAddPrompt = (message: IWebAddPromptMsg) => {
@@ -190,6 +220,9 @@ class UIManager {
       case "add-prompt":
         this.handleAddPrompt(message as IWebAddPromptMsg);
         break;
+      case "copy-prompt":
+        this.handleCopyPrompt(message as IWebCopyPromptMsg);
+        break;
     }
   };
 
@@ -202,7 +235,7 @@ class UIManager {
     } else {
       this._currentPanel = vscode.window.createWebviewPanel(
         "fe-dev-tools",
-        "chat",
+        "CHAT",
         vscode.ViewColumn.Beside,
         {
           enableScripts: true,

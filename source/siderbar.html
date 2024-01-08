@@ -13,6 +13,30 @@
         height: 100vh;
         font-size: var(--vscode-font-size);
       }
+      @keyframes chat-loading {
+        0% {
+          content: ".";
+        }
+        33% {
+          content: "..";
+        }
+        66% {
+          content: "...";
+        }
+        100% {
+          content: ".";
+        }
+      }
+      .chat-loading {
+        display: inline-block;
+        color: var(--vscode-descriptionForeground);
+      }
+
+      .chat-loading::after {
+        content: ".";
+        animation: chat-loading 2s infinite;
+      }
+
       #bottom-container {
         background-color: var(--vscode-editor-background);
         padding: 8px 10px;
@@ -102,6 +126,7 @@
         overflow-y: scroll;
       }
       #cur-prompt {
+        flex: 1;
         color: var(
           --vscode-descriptionForeground
         ); /*替换为vscode官方推荐的描述文字颜色变量*/
@@ -164,6 +189,7 @@
         fill: var(
           --vscode-icon-foreground
         ); /*替换为vscode官方推荐的按钮前景颜色变量*/
+        margin-left: 3px;
       }
     </style>
   </head>
@@ -171,6 +197,7 @@
     <?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 
     <div id="chat-container"></div>
+
     <div id="bottom-container">
       <div id="function-panel"></div>
       <div id="add-prompt-panel">
@@ -184,18 +211,32 @@
 
       <div id="cur-prompt-container">
         <div id="cur-prompt"></div>
-        <svg
-          id="not-use-prompt"
-          class="icon"
-          viewBox="0 0 1024 1024"
-          version="1.1"
-          width="10"
-          height="10"
-        >
-          <path
-            d="M570.514286 512l292.571428-292.571429c14.628571-14.628571 14.628571-43.885714 0-58.514285-14.628571-14.628571-43.885714-14.628571-58.514285 0l-292.571429 292.571428-292.571429-292.571428c-14.628571-14.628571-43.885714-14.628571-58.514285 0-21.942857 14.628571-21.942857 43.885714 0 58.514285l292.571428 292.571429-292.571428 292.571429c-14.628571 14.628571-14.628571 43.885714 0 58.514285 14.628571 14.628571 43.885714 14.628571 58.514285 0l292.571429-292.571428 292.571429 292.571428c14.628571 14.628571 43.885714 14.628571 58.514285 0 14.628571-14.628571 14.628571-43.885714 0-58.514285l-292.571428-292.571429z"
-          ></path>
-        </svg>
+        <span>
+          <svg
+            id="copy-prompt"
+            class="icon"
+            viewBox="0 0 1024 1024"
+            version="1.1"
+            width="12"
+            height="12"
+          >
+            <path
+              d="M640 160 256 160C220.64 160 192 188.64 192 224L192 672 256 672 256 224 640 224 640 160 640 160ZM736 288 384 288C348.64 288 320 316.672 320 352L320 800C320 835.328 348.64 864 384 864L736 864C771.328 864 800 835.328 800 800L800 352C800 316.672 771.328 288 736 288L736 288ZM384 352 736 352 736 800 384 800 384 352Z"
+            ></path>
+          </svg>
+          <svg
+            id="not-use-prompt"
+            class="icon"
+            viewBox="0 0 1024 1024"
+            version="1.1"
+            width="10"
+            height="10"
+          >
+            <path
+              d="M570.514286 512l292.571428-292.571429c14.628571-14.628571 14.628571-43.885714 0-58.514285-14.628571-14.628571-43.885714-14.628571-58.514285 0l-292.571429 292.571428-292.571429-292.571428c-14.628571-14.628571-43.885714-14.628571-58.514285 0-21.942857 14.628571-21.942857 43.885714 0 58.514285l292.571428 292.571429-292.571428 292.571429c-14.628571 14.628571-14.628571 43.885714 0 58.514285 14.628571 14.628571 43.885714 14.628571 58.514285 0l292.571429-292.571428 292.571429 292.571428c14.628571 14.628571 43.885714 14.628571 58.514285 0 14.628571-14.628571 14.628571-43.885714 0-58.514285l-292.571428-292.571429z"
+            ></path>
+          </svg>
+        </span>
       </div>
       <div id="input-container">
         <textarea
@@ -249,6 +290,7 @@
         "cur-prompt-container"
       );
       const notUsePromptNode = document.getElementById("not-use-prompt");
+      const copyPromptNode = document.getElementById("copy-prompt");
       const addPromptButton = document.getElementById("add-prompt-button");
       const addPromptPanel = document.getElementById("add-prompt-panel");
       const addPromptInput = document.getElementById("add-prompt-input");
@@ -322,12 +364,10 @@
               chatContainerNode.appendChild(messageDiv);
               break;
             case "pending":
-              const loadingImg = document.createElement("img");
-              loadingImg.src =
-                loadingGifs[Math.floor(Math.random() * loadingGifs.length)];
-              loadingImg.width = 50;
-              loadingImg.alt = "loading";
-              chatContainerNode.appendChild(loadingImg);
+              const loadingDiv = document.createElement("div");
+              loadingDiv.classList.add("chat-loading");
+              loadingDiv.textContent = "答案生成中";
+              chatContainerNode.appendChild(loadingDiv);
               break;
           }
         });
@@ -338,7 +378,9 @@
         Object.keys(prompts).forEach((key) => {
           const promptContainerDiv = document.createElement("div");
           const promptDiv = document.createElement("div");
+          const actionContainerSpan = document.createElement("span");
           const delNode = notUsePromptNode.cloneNode(true);
+          const copyNode = copyPromptNode.cloneNode(true);
           promptContainerDiv.classList.add("prompt_container");
           promptDiv.classList.add("prompt");
           if (key === curPromptKey) {
@@ -347,6 +389,14 @@
           delNode.addEventListener("click", function () {
             vscode.postMessage({
               command: "delete-prompt",
+              data: {
+                key,
+              },
+            });
+          });
+          copyNode.addEventListener("click", function () {
+            vscode.postMessage({
+              command: "copy-prompt",
               data: {
                 key,
               },
@@ -366,7 +416,9 @@
             promptDiv.setAttribute("title", prompts[key]);
           });
           promptContainerDiv.appendChild(promptDiv);
-          promptContainerDiv.appendChild(delNode);
+          actionContainerSpan.appendChild(copyNode);
+          actionContainerSpan.appendChild(delNode);
+          promptContainerDiv.appendChild(actionContainerSpan);
           functionPanel.appendChild(promptContainerDiv);
         });
       };
@@ -387,6 +439,14 @@
       notUsePromptNode.addEventListener("click", function () {
         vscode.postMessage({
           command: "change-cur-prompt",
+          data: {
+            key: "",
+          },
+        });
+      });
+      copyPromptNode.addEventListener("click", function () {
+        vscode.postMessage({
+          command: "copy-prompt",
           data: {
             key: "",
           },
